@@ -1,5 +1,6 @@
-# Run as: blender -b -P <this_script> -- <mesh.obj> <theta> <phi>
+# Run as: blender -b -P <this_script> -- <mesh.obj> <theta> <phi> <resolution_pct>
 #theta and phi are the spherical coordinates on a sphere of fixed radius 4, of were to position the camera. theta controlsthe north/south axis, phi controls east/west. 0,0 is on top looking down. pi,0 is bottom, looking up.
+#resolution percentage is a value 0<x<100 represents what proportion of a full resolution of 1920x1080 were after
 import bpy, sys, os, subprocess
 from math import cos, sin, pi
 import mathutils
@@ -24,6 +25,7 @@ def move_camera(theta,phi):
 full_path = argv[0]
 theta = float(argv[1])
 phi = float(argv[2])
+resolution_pct = argc[3]
 out_path = os.getcwd()
 bpy.ops.import_scene.obj(filepath=full_path)
 #bpy.ops.object.mode_set(mode='OBJECT')
@@ -59,8 +61,9 @@ C.scene.camera.constraints["Track To"].target = list(filter(lambda x: x.type=='M
 C.scene.camera.constraints["Track To"].track_axis = 'TRACK_NEGATIVE_Z'
 C.scene.camera.constraints["Track To"].up_axis = 'UP_Y'
 #make background white
-bpy.context.scene.world.horizon_color = (1, 1, 1)
 
+bpy.context.scene.world.horizon_color = (1, 1, 1)
+bpy.context.scene.render.resolution_percentage = resolution_pct
 bpy.context.scene.render.filepath = out_path
 bpy.context.scene.render.filepath += "/"+str(full_path.split('/')[-1])
 
