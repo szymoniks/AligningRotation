@@ -25,7 +25,7 @@ def move_camera(theta,phi):
 full_path = argv[0]
 theta = float(argv[1])
 phi = float(argv[2])
-resolution_pct = argc[3]
+resolution_pct = int(argv[3])
 out_path = os.getcwd()
 bpy.ops.import_scene.obj(filepath=full_path)
 #bpy.ops.object.mode_set(mode='OBJECT')
