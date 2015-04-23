@@ -1,4 +1,4 @@
-# Run as: blender -b -P <this_script> -- <mesh.obj> <theta> <phi> <resolution_pct>
+# Run as: blender -b -P <this_script> -- <mesh.obj> <theta> <phi> <resolution_pct> <out_file>
 #theta and phi are the spherical coordinates on a sphere of fixed radius 4, of were to position the camera. theta controlsthe north/south axis, phi controls east/west. 0,0 is on top looking down. pi,0 is bottom, looking up.
 #resolution percentage is a value 0<x<100 represents what proportion of a full resolution of 1920x1080 were after
 import bpy, sys, os, subprocess
@@ -26,7 +26,8 @@ full_path = argv[0]
 theta = float(argv[1])
 phi = float(argv[2])
 resolution_pct = int(argv[3])
-out_path = os.getcwd()
+#out_path = os.getcwd()
+out_path = argv[4]
 bpy.ops.import_scene.obj(filepath=full_path)
 #bpy.ops.object.mode_set(mode='OBJECT')
 #print(bpy.data.objects[:])
@@ -65,9 +66,11 @@ C.scene.camera.constraints["Track To"].up_axis = 'UP_Y'
 bpy.context.scene.world.horizon_color = (1, 1, 1)
 bpy.context.scene.render.resolution_percentage = resolution_pct
 bpy.context.scene.render.filepath = out_path
-bpy.context.scene.render.filepath += "/"+str(full_path.split('/')[-1])
+#bpy.context.scene.render.filepath = out_path
+#bpy.context.scene.render.filepath += "/"+str(full_path.split('/')[-1])
 
 bpy.ops.render.render(write_still=True)
 
-subprocess.call(["display", bpy.context.scene.render.filepath+".png"])
+#subprocess.call(["display", bpy.context.scene.render.filepath+".png"])
+#subprocess.call(["display", out_path+".png"])
 
