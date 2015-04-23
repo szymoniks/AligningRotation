@@ -42,7 +42,7 @@ def main(argv):
     for vh in mesh.vertices():
         mesh.set_point(vh, mesh.point(vh).normalize() * mesh.point(vh).length() / farthestPoint.length())    
         
-    write_mesh(mesh, os.getcwd()+"/"+argv[0].split("/")[-1])
+    write_mesh(mesh, argv[1] +"/"+argv[0].split("/")[-1])
 
 if __name__ == "__main__":
     main(sys.argv[1:])
