@@ -48,14 +48,19 @@ C.scene.objects.active = obs[0]
 bpy.ops.object.join()
 print(scene.objects[:])
 bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS')
+#rotate
+#bpy.ops.transform.rotate(value=theta, axis=(1, 0, 0), constraint_axis=(False, False, False), constraint_orientation='GLOBAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
+#bpy.ops.transform.rotate(value=phi, axis=(0, 1, 0), constraint_axis=(False, False, False), constraint_orientation='GLOBAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
 
 bpy.ops.object.select_all(action='DESELECT')
 C.scene.camera.select = True
 mesh = list(filter(lambda x: x.type=='MESH', scene.objects[:]))[0]
+
+C.scene.camera.constraints.new(type='LIMIT_DISTANCE')
+C.scene.camera.constraints["Limit Distance"].target = mesh
+C.scene.camera.constraints["Limit Distance"].distance = fixed_camera_distance
 move_camera(theta,phi)
-#C.scene.camera.constraints.new(type='LIMIT_DISTANCE')
-#C.scene.camera.constraints["Limit Distance"].target = mesh
-#C.scene.camera.constraints["Limit Distance"].distance = fixed_camera_distance
+
 
 C.scene.camera.constraints.new(type='TRACK_TO')
 C.scene.camera.constraints["Track To"].target = list(filter(lambda x: x.type=='MESH', scene.objects[:]))[0]
