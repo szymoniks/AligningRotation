@@ -119,7 +119,7 @@ def get_cnt(image):
     #imgray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
     height, width = image.shape[:2]
     ret,thresh = cv2.threshold(image,127,255,0)
-    _, contours0, hierarchy = cv2.findContours(thresh,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+    _, contours0, hierarchy = cv2.findContours(thresh,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
     contours = np.array([cv2.approxPolyDP(cnt, 3, True) for cnt in contours0])
     return contours
 def return_empty_image(h,w):
@@ -130,18 +130,18 @@ def apply_contour(cnt, image):
     cv2.drawContours(image,cnt,-1,(0,255,0),3)
     return empty
 
-def contourise(image):
-    imgray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
-    height, width, depth = img.shape
-    empty = np.zeros((height,width,3), np.uint8)
-    empty[::] = (255,255,255)    
-    ret,thresh = cv2.threshold(imgray,127,255,0)
-    _, contours0, hierarchy = cv2.findContours(thresh,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
-    contours = np.array([cv2.approxPolyDP(cnt, 3, True) for cnt in contours0])
-    print(len(contours))
-    cv2.drawContours(empty,contours,-1,(0,255,0),3)
-
-    return empty, contours
+#def contourise(image):
+#    imgray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+#    height, width, depth = img.shape
+#    empty = np.zeros((height,width,3), np.uint8)
+#    empty[::] = (255,255,255)    
+#    ret,thresh = cv2.threshold(imgray,127,255,0)
+#   _, contours0, hierarchy = cv2.findContours(thresh,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+#    contours = np.array([cv2.approxPolyDP(cnt, 3, True) for cnt in contours0])
+#    print(len(contours))
+#    cv2.drawContours(empty,contours,-1,(0,255,0),3)
+#
+#    return empty, contours
 
 
 def translate_img(img, x, y):
@@ -163,32 +163,58 @@ def center_cnt(cnt, img):
     shifty = (imh*.5) - (y + (.4*h))
     cnt = translate_cnt(cnt, shiftx, shifty)
     return cnt
-#def center(img, cnt):
-#    cnt = np.array([ item for l in cnt for item in l]) 
-#    print "cnts: {}".format(cnt)
-#    imh,imw = img.shape[:2]
-#    x,y,w,h = cv2.boundingRect(cnt)
-#    shiftx = (imw*.5) - (x + (.5*w))
-#    shifty = (imh*.5) - (y + (.4*h))
-#    img = translate_img(img, shiftx, shifty)
-#    return img
+
+def get_bound(cnt):
+    cnt_rect = np.array([ item for l in cnt for item in l]) 
+    x,y,w,h = cv2.boundingRect(cnt_rect)
+    return x,y,w,h
 def draw_bound(img, cnt):
-    x,y,w,h = cv2.boundingRect(cnt)
+    x,y,w,h = get_bound(cnt)
     rect = ((x,y),(x+w,y+h))
     cv2.rectangle(img, rect[0], rect[1], (0,0,0))
     return img
-def correct(img, cnt):
-    
-    height, width, _ = img.shape
+
+def checker(d, cnt):
+    _,_, chair_width,_ = get_bound(cnt)
+    right_side = (d['tr'],d['br'])
+    #bottom left is closer to chair than top left
+    cond1 = abs(d['bl']) < abs(d['tl'])
+    #bottom left and bottom right are within half a chair width of each other
+    cond2 = abs(max((d['bl'], d['br']))-min((d['bl'], d['br']))) < .5*chair_width
+    #the top right and bottom left values are roughly equidistant from the chair
+    cond3 = abs(max(right_side)-min(right_side)) < .1*abs(max(right_side))
+    return cond1 and cond2 and cond3
+
+def get_distances(height, width, cnt):
+    #height, width, _ = img.shape
     print "h {} w {}".format(height, width)
-# x,y = width, height
-    punto = (int(width*.85), int(height*.25))
+    # x,y = width, height
     pt_cof = (.85,.1)
     
     checkpoints = itertools.product(pt_cof, repeat=2)
+    order = ('br','tr','bl','tl')
+    dist = {}
+    for i,coef in enumerate(checkpoints):
+        pt = (int(width*coef[0]), int(height*coef[1]))
+        print "[{}]".format(pt)
+        d = min([cv2.pointPolygonTest(c, pt,True) for c in cnt])
+        dist[order[i]] = d  
+    print dist
+    return dist
+def correct(img, cnt):
+    
+    height, width, _ = img.shape
+
+    # x,y = width, height
+
+    pt_cof = (.85,.1)
+        
+    #goes: bottom right, top right, bottom left, top left
+    checkpoints = itertools.product(pt_cof, repeat=2)
+   
     for coef in checkpoints:
         pt = (int(width*coef[0]), int(height*coef[1]))
-        dist = min([cv2.pointPolygonTest(c, pt,True) for c in cnt])
+        dist = min([cv2.pointPolygonTest(c, pt,True) for c in cnt], key=abs)
         cv2.putText(img, str(dist), pt, cv2.FONT_HERSHEY_SIMPLEX, .5, (0,0,0))
         cv2.circle(img, pt, 10, (255, 0, 0))  
     #img = draw_bound(img, cnt)
@@ -203,17 +229,13 @@ def correct(img, cnt):
 
 #plt.imshow(contours,cmap = 'gray')
 #plt.title('Edge Image'), plt.xticks([]), plt.yticks([])
-    # directory = argv[0]
-    # os.chdir(directory)
-    # for file in glob.glob("*.obj"):
-    #    print("modifying mesh " + file)
-    #    scaleAndMove.main([file, os.getcwd()])
+
 testers = glob.glob("*.png")
-impath = 'test/0x0.png' #master
-#impath = testers[2]
-impath2 = '0.25x1.0.png'
+#impath = 'test/0x0.png' #master
+impath = testers[0]
+#impath = '0.25x1.0.png'
 img = cv2.imread(impath) 
-img2 = cv2.imread(impath2) 
+#img2 = cv2.imread(impath2) 
 #
 #invert the images
 cv2.bitwise_not(img, img)
@@ -224,8 +246,10 @@ cnt = get_cnt(img)
 empty = return_empty_image(height,width)
 cnt = center_cnt(cnt, empty)
 empty = apply_contour(cnt, empty)
+dists = get_distances(height, width, cnt)
 #contoured2 = contourise(img2)
 #contoured1 = cv2.cvtColor(contoured1,cv2.COLOR_BGR2GRAY)
+
 empty = correct(empty,cnt)
 show(empty)
 #contoured2 = cv2.cvtColor(contoured2,cv2.COLOR_BGR2GRAY)
