@@ -14,11 +14,7 @@ def run_command(cmd):
     subprocess.call(cmd, shell=True)
 
 def main(argv):
-    # directory = argv[0]
-    # os.chdir(directory)
-    # for file in glob.glob("*.obj"):
-    #    print("modifying mesh " + file)
-    #    scaleAndMove.main([file, os.getcwd()])
+#<meshobj> <samples> <outfolder>
     
     fileName = argv[0]
     scaledMeshFileName = fileName + "scaled.obj"
@@ -27,13 +23,13 @@ def main(argv):
     
     scaleAndMove.main([fileName, scaledMeshFileName])
     
-    for x in drange(0, 1.00001, 1.0/(float(samplesPerR)-1)):
+    for x in drange(.001, 1.00001, 1.0/(float(samplesPerR)-1)):
         theta = 2 * math.pi * x - math.pi
         for y in drange(0, 1.00001, 1.0/(float(samplesPerR)-1)):
             phi = math.acos(2*y - 1.0) - math.pi
             run_command("blender -b -P screenshot.py -- " + scaledMeshFileName + " " + str(theta) + " " + str(phi) + " 30 " + outFolder + str(x) + "x" + str(y))
             
-    for x in drange(0, 1.00001, 1.0/(float(samplesPerR)-1)):
+    for x in drange(.001, 1.00001, 1.0/(float(samplesPerR)-1)):
         theta = 2 * math.pi * x - math.pi
         for y in drange(0, 1.00001, 1.0/(float(samplesPerR)-1)):
             phi = math.acos(2*y - 1.0) - math.pi
