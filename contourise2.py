@@ -134,8 +134,8 @@ def main(args):
 #usage, python contourise2 <directory of pngs>
     directory = args[0]
     #goes through every image
-    candidates = glob.glob(directory+"/*.png")
-    #candidates = ["test3/0.715285714286x0.142857142857.png"]
+    #candidates = glob.glob(directory+"/*.png")
+    candidates = ["test/0.75x0.png"]
     for candidate in candidates:
         cndt = cv2.imread(candidate)
         #invert it
